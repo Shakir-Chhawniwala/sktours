@@ -57,7 +57,7 @@ typings
 .env.production
 /.eslintcache
 /.idea
-./config.env
+/config.env
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -76,6 +76,7 @@ node_modules/
 jspm_packages/
 /node_modules
 /.pnp
+.package-lock.json
 # Optional npm cache directory
 .npm
 
