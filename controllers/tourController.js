@@ -31,7 +31,35 @@ exports.getAllTours = async (req, res) => {
   // console.log(req.requestTime);
 
   try {
-    const tours = await Tour.find();
+    // 1 Filtering
+    const filterQuery = {...req.query}
+    const excludedQuery = ["page", "sort", "limit", "fields"]
+    excludedQuery.forEach((query) => {
+      delete filterQuery[query]
+    })
+    // Advance
+    let queryString = JSON.stringify(filterQuery)
+    queryString.replace(/\b(lt|lte|gt|gte)\b/g, match => `$${match}`)
+    
+    let query =  Tour.find(JSON.parse(queryString));
+    
+    // 2 Sorting
+    if(req.query.sort) {
+      const sortBy = req.query.sort.split(",").join(" ")
+      query = query.sort(sortBy)
+    } else {
+      query = query.sort("-createdAt")
+    }
+
+    // 3 Fields Limiting
+    if(req.query.fields) {
+      const fields = req.query.fields.split(",").join(" ")
+      query = query.select(fields)
+    } else {
+      query = query.select("-__v")
+    }
+
+    const tours = await query 
     res.status(200).json({
       status: 'success',
       // requestedAt: req.requestTime,
@@ -43,7 +71,7 @@ exports.getAllTours = async (req, res) => {
   } catch (error) {
     res.status(400).json({
       status: 'fail',
-      message: 'Something went wrong',
+      message: error,
     });
   }
 };
