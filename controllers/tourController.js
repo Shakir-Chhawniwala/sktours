@@ -1,5 +1,5 @@
-const fs = require('fs');
 const Tour = require('../models/tourModel');
+const APIFeatures = require('./../utils/apiFeatures');
 
 // const tours = JSON.parse(
 //   fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
@@ -27,51 +27,35 @@ const Tour = require('../models/tourModel');
 //   next();
 // };
 
+exports.aliasTopTours = (req, res, next) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
+
 exports.getAllTours = async (req, res) => {
-  // console.log(req.requestTime);
-
   try {
-    // 1 Filtering
-    const filterQuery = {...req.query}
-    const excludedQuery = ["page", "sort", "limit", "fields"]
-    excludedQuery.forEach((query) => {
-      delete filterQuery[query]
-    })
-    // Advance
-    let queryString = JSON.stringify(filterQuery)
-    queryString.replace(/\b(lt|lte|gt|gte)\b/g, match => `$${match}`)
-    
-    let query =  Tour.find(JSON.parse(queryString));
-    
-    // 2 Sorting
-    if(req.query.sort) {
-      const sortBy = req.query.sort.split(",").join(" ")
-      query = query.sort(sortBy)
-    } else {
-      query = query.sort("-createdAt")
-    }
+    // EXECUTE QUERY
+    const features = new APIFeatures(Tour.find(), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+    const tours = await features.query;
 
-    // 3 Fields Limiting
-    if(req.query.fields) {
-      const fields = req.query.fields.split(",").join(" ")
-      query = query.select(fields)
-    } else {
-      query = query.select("-__v")
-    }
-
-    const tours = await query 
+    // SEND RESPONSE
     res.status(200).json({
       status: 'success',
-      // requestedAt: req.requestTime,
       results: tours.length,
       data: {
-        tours,
-      },
+        tours
+      }
     });
-  } catch (error) {
-    res.status(400).json({
+  } catch (err) {
+    res.status(404).json({
       status: 'fail',
-      message: error,
+      message: err
     });
   }
 };
@@ -81,18 +65,18 @@ exports.getTour = async (req, res) => {
 
   // const tour = tours.find((el) => el.id === id);
   try {
-    const id = req.params.id; //* 1;
+    const { id } = req.params; //* 1;
     const tour = Tour.findById(id);
     res.status(200).json({
       status: 'success',
       data: {
-        tour,
-      },
+        tour
+      }
     });
   } catch (error) {
     res.status(400).json({
       status: 'fail',
-      message: 'Cannot find with this id.',
+      message: 'Cannot find with this id.'
     });
   }
 };
@@ -114,13 +98,13 @@ exports.createTour = async (req, res) => {
     res.status(201).json({
       status: 'success',
       data: {
-        tour: newTour,
-      },
+        tour: newTour
+      }
     });
   } catch (error) {
     res.status(400).json({
       status: 'fail',
-      error: error,
+      error: error
     });
   }
   // }
@@ -132,24 +116,24 @@ exports.updateTour = async (req, res) => {
     const tour = await Tour.findByIdAndUpdate(req.body.params, req.body, {
       new: true,
       runValidators: true
-    })
+    });
     res.status(200).json({
       status: 'success',
       data: {
-        tour: '<Updated tour here...>',
-      },
+        tour: tour
+      }
     });
   } catch (error) {
-      res.status(400).json({
-        status: 'fail',
-        error: error,
-      });
+    res.status(400).json({
+      status: 'fail',
+      error: error
+    });
   }
 };
 
 exports.deleteTour = (req, res) => {
   res.status(204).json({
     status: 'success',
-    data: null,
+    data: null
   });
 };
