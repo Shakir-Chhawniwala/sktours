@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
-const app = require('./app');
 const mongoose = require('mongoose');
-const { Schema } = mongoose;
+const app = require('./app');
+
 dotenv.config({ path: './config.env' });
 
 const DB = process.env.DATABASE.replace(
@@ -10,11 +10,9 @@ const DB = process.env.DATABASE.replace(
 );
 
 mongoose.set('strictQuery', false);
-mongoose.connect(DB).then((connection) => {
+mongoose.connect(DB).then(() => {
   console.log('DB is running');
 });
-
-
 
 // PORT
 const port = process.env.PORT || 8080;
