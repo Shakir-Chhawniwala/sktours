@@ -12,7 +12,7 @@ router.post('/login', authController.login);
 // route to get all users and create a new user and middle ware route to authenticate users
 router
   .route('/')
-  .get(authController.protect, userController.getAllUsers)
+  .get(userController.getAllUsers)
   .post(userController.createUser);
 // route to create, delete, read and update user .
 router

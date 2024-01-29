@@ -40,7 +40,8 @@ const userSchema = new Schema({
         return e === this.password;
       }
     }
-  }
+  },
+  passwordChangedAt: Date
 });
 
 // Middleware defined before creating user in DB for hasing password.
@@ -53,10 +54,21 @@ userSchema.pre('save', async function(next) {
   // since password confirm field is just for confirming password we hare setting password confirm field to undefined in order to avoid duplicancy.
   this.passwordConfirm = undefined;
 });
-// This is a custom method on user schema to compare passord
+// This is a custom method on user schema to compare password
 // and will be available with user schema obj
 userSchema.methods.correctPassword = function(candidatePassword, userPassword) {
   return bcrypt.compare(candidatePassword, userPassword);
+};
+// Custom method for tracking user password date expired
+userSchema.method.changedPasswordAfter = function(JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const convertToTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp > convertToTimestamp;
+  }
+  return false;
 };
 // Creating model with moongose liabrary
 const User = mongoose.model('User', userSchema);

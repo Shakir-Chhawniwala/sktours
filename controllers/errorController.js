@@ -1,5 +1,6 @@
 const AppError = require('../utils/appError');
 
+// Mote:- All this error handler function are for prod.
 const handleCastErrorDB = err => {
   const message = `Invalid ${err.path} : ${err.value}`;
   return new AppError(message, 400);
@@ -16,13 +17,13 @@ const handleValidationErrorDB = err => {
   const message = `Missing fields: ${values.join('. ')}`;
   return new AppError(message, 400);
 };
-
+// Wrong JWT token error function.
 const handleJsonWebTokenError = () =>
   new AppError('Invalid Token, please log in again.', 401);
-
+// JWT expired token error function.
 const handleJWTExpiredError = () =>
   new AppError('Your token has expired, please log in again.', 401);
-
+// Dev error function
 const sendErrorDev = (err, res) => {
   res.status(err.stausCode).json({
     status: err.status,
@@ -31,12 +32,15 @@ const sendErrorDev = (err, res) => {
     stack: err.stack
   });
 };
+// Prod error function
 const sendErrorProd = (err, res) => {
+  // User error condition.
   if (err.isOperational) {
     res
       .status(err.stausCode)
       .json({ status: err.status, message: err.message });
   } else {
+    // Server error
     console.error('Error', err);
     res.staus(500).json({
       status: 'error',
@@ -44,7 +48,7 @@ const sendErrorProd = (err, res) => {
     });
   }
 };
-
+// Middleware for error handling.
 module.exports = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';

@@ -2,7 +2,7 @@
 /* eslint-disable import/no-unresolved */
 /* eslint-disable import/no-extraneous-dependencies */
 // Inbuilt function
-const { promisify } = require('utils');
+const { promisify } = require('util');
 // liab for JSON web tokens
 const jwt = require('jsonwebtoken');
 // importing user from user schema
@@ -78,7 +78,26 @@ exports.protect = catchAsync(async (req, res, next) => {
       new AppError('You are not logged in, please login first.', 401)
     );
   }
+  // Verifying if token is valid.
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  console.log(decoded);
+  // Find the user with the given token.
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    return next(
+      new AppError('The user belonging to this token does not exist.', 401)
+    );
+  }
+  // Check if user has changed passowrd after the token was issued.
+  if (currentUser.passwordChangedAt(decoded.iat)) {
+    return next(
+      new AppError(
+        'The user has changed password recently please log in again.',
+        401
+      )
+    );
+  }
+  // Adding current user in the req so that it can available everywhere.
+  req.user = currentUser;
+
   next();
 });
