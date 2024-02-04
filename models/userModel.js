@@ -23,6 +23,11 @@ const userSchema = new Schema({
     // Third party liabrary used for email validation
     validate: [validator.isEmail, 'Please provide a valid email']
   },
+  role: {
+    type: String,
+    default: 'user',
+    enum: ['user', 'admin', 'lead-guide', 'guide']
+  },
   photo: String,
   password: {
     type: String,
