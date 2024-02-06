@@ -103,6 +103,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
+// Restricting access to certain users
 exports.restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user)) {
