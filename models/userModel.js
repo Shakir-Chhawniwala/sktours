@@ -1,4 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
+const crypto = require('crypto');
 // lib for custom validation
 const validator = require('validator');
 // MongoDB framework
@@ -46,7 +47,9 @@ const userSchema = new Schema({
       }
     }
   },
-  passwordChangedAt: Date
+  passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpiresAt: Date
 });
 
 // Middleware defined before creating user in DB for hasing password.
@@ -74,6 +77,19 @@ userSchema.method.changedPasswordAfter = function(JWTTimestamp) {
     return JWTTimestamp > convertToTimestamp;
   }
   return false;
+};
+// Custom method for creating reset password token
+userSchema.methods.createPasswordResetToken = function() {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  this.passwordResetExpiresAt = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 // Creating model with moongose liabrary
 const User = mongoose.model('User', userSchema);
