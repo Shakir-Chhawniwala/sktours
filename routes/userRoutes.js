@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/signup', authController.signup);
 // login route
 router.post('/login', authController.login);
-router.patch('/resetPassword', authController.resetPassword);
+router.patch('/resetPassword/:token', authController.resetPassword);
 router.post('/forgotPassword', authController.forgotPassword);
 // route to get all users and create a new user and middle ware route to authenticate users
 router
