@@ -52,6 +52,12 @@ const userSchema = new Schema({
   passwordResetExpiresAt: Date
 });
 
+userSchema.pre('save', function(next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
 // Middleware defined before creating user in DB for hasing password.
 userSchema.pre('save', async function(next) {
   // Note:- Since this function is defined with "function" keyword we have access to "this"

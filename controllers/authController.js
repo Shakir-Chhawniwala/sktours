@@ -1,6 +1,7 @@
 /* eslint-disable node/no-missing-require */
 /* eslint-disable import/no-unresolved */
 /* eslint-disable import/no-extraneous-dependencies */
+const crypto = require('crypto');
 // Inbuilt function
 const { promisify } = require('util');
 // liab for JSON web tokens
@@ -151,4 +152,37 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   }
 });
 
-exports.resetPassword = catchAsync(async (req, res, next) => {});
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
+
+  const user = User.findOne({
+    passwordResetToken: hashedToken,
+    passwordChangedAt: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    return next(new AppError('Token has expired or invalid.'), 400);
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpiresAt = undefined;
+  await user.save();
+
+  // the id passed in sign token function is automatically created by mongo.
+  const token = signToken(user._id);
+  // response with token and user
+  res.status(201).json({
+    status: 'success',
+    token,
+    data: {
+      user: user
+    }
+  });
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {});
