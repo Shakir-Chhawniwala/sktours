@@ -15,6 +15,16 @@ router.patch(
   authController.protect,
   authController.updatePassword
 );
+router.patch(
+  '/updatetMe',
+  authController.protect,
+  authController.updatePassword
+);
+router.patch(
+  '/deleteMe',
+  authController.protect,
+  authController.updatePassword
+);
 // route to get all users and create a new user and middle ware route to authenticate users
 router
   .route('/')
