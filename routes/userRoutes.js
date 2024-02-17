@@ -20,7 +20,7 @@ router.patch(
   authController.protect,
   authController.updatePassword
 );
-router.patch(
+router.delete(
   '/deleteMe',
   authController.protect,
   authController.updatePassword
