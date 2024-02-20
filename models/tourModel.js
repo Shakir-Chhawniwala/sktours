@@ -74,6 +74,16 @@ const tourSchema = new Schema(
       select: false
     },
     startDates: [Date],
+    startLocation: {
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point']
+      },
+      coordinates: [Number],
+      address: String,
+      description: String
+    },
     secretTour: {
       type: Boolean,
       default: false
