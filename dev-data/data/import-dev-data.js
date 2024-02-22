@@ -11,17 +11,16 @@ const DB = process.env.DATABASE.replace(
 );
 
 mongoose.set('strictQuery', false);
-mongoose.connect(DB).then((connection) => {
+mongoose.connect(DB).then(() => {
   console.log('DB is running');
 });
 
 // READ JSON FILE
-const tours = JSON.parse(
-  fs.readFileSync(`${__dirname}/tours-simple.json`, 'utf-8')
-);
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'));
 
 // IMPORT DATA INTO DB
 const importData = async () => {
+  console.log('I was called');
   try {
     await Tour.create(tours);
     console.log('Data successfully loaded!');
