@@ -1,7 +1,9 @@
 const mongoose = require('mongoose');
-
+// eslint-disable-next-line import/no-extraneous-dependencies
+const slugify = require('slugify');
+// const User = require('./userModel');
+// const validator = require('validator');
 const { Schema } = mongoose;
-
 const tourSchema = new Schema(
   {
     name: {
@@ -13,7 +15,7 @@ const tourSchema = new Schema(
       minlength: [10, 'A tour name must have more or equal then 10 characters']
       // validate: [validator.isAlpha, 'Tour name must only contain characters']
     },
-    // slug: String,
+    slug: String,
     duration: {
       type: Number,
       required: [true, 'A tour must have a duration']
@@ -34,7 +36,8 @@ const tourSchema = new Schema(
       type: Number,
       default: 4.5,
       min: [1, 'Rating must be above 1.0'],
-      max: [5, 'Rating must be below 5.0']
+      max: [5, 'Rating must be below 5.0'],
+      set: val => Math.round(val * 10) / 10 // 4.666666, 46.6666, 47, 4.7
     },
     ratingsQuantity: {
       type: Number,
@@ -74,7 +77,12 @@ const tourSchema = new Schema(
       select: false
     },
     startDates: [Date],
+    secretTour: {
+      type: Boolean,
+      default: false
+    },
     startLocation: {
+      // GeoJSON
       type: {
         type: String,
         default: 'Point',
@@ -97,37 +105,87 @@ const tourSchema = new Schema(
         day: Number
       }
     ],
-    secretTour: {
-      type: Boolean,
-      default: false
-    }
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User'
+      }
+    ]
   },
   {
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
   }
 );
+
+// tourSchema.index({ price: 1 });
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 // To have virtual properties in API with out saving to DB
-tourSchema.virtual('durationWeeks', function() {
+tourSchema.virtual('durationWeeks').get(function() {
   return this.duration / 7;
 });
-// Middleware for DB pre and post save
-tourSchema.pre('save', function(next) {});
-tourSchema.post('save', function(next) {});
 
-// Middleware for DB pre and post find
-tourSchema.pre('find', function(next) {
+// Virtual populate
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id'
+});
+
+// DOCUMENT MIDDLEWARE: runs before .save() and .create()
+tourSchema.pre('save', function(next) {
+  this.slug = slugify(this.name, { lower: true });
+  next();
+});
+
+// tourSchema.pre('save', async function(next) {
+//   const guidesPromises = this.guides.map(async id => await User.findById(id));
+//   this.guides = await Promise.all(guidesPromises);
+//   next();
+// });
+
+// tourSchema.pre('save', function(next) {
+//   console.log('Will save document...');
+//   next();
+// });
+
+// tourSchema.post('save', function(doc, next) {
+//   console.log(doc);
+//   next();
+// });
+
+// QUERY MIDDLEWARE
+// tourSchema.pre('find', function(next) {
+tourSchema.pre(/^find/, function(next) {
   this.find({ secretTour: { $ne: true } });
-  next();
-});
-tourSchema.post('find', function(next) {});
 
-// Middleware for DB pre and post aggregate
-tourSchema.pre('aggregate', function(next) {
-  this.pipeline().unshift({ secretTour: { $ne: true } });
+  this.start = Date.now();
   next();
 });
-tourSchema.post('aggregate', function(next) {});
+
+tourSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangedAt'
+  });
+
+  next();
+});
+
+tourSchema.post(/^find/, function(docs, next) {
+  console.log(`Query took ${Date.now() - this.start} milliseconds!`);
+  next();
+});
+
+// AGGREGATION MIDDLEWARE
+// tourSchema.pre('aggregate', function(next) {
+//   this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
+
+//   console.log(this.pipeline());
+//   next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 
