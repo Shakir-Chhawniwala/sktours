@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-// eslint-disable-next-line import/no-extraneous-dependencies
+// eslint-disable-next-line import/no-extraneous-dependencies, import/no-unresolved
 const slugify = require('slugify');
 // const User = require('./userModel');
 // const validator = require('validator');
@@ -150,7 +150,14 @@ tourSchema.pre('save', function(next) {
 //   console.log('Will save document...');
 //   next();
 // });
+tourSchema.pre(/^find/, function(next) {
+  this.populate({
+    path: 'guides',
+    select: '-v, passwordChangedAt'
+  });
 
+  next();
+});
 // tourSchema.post('save', function(doc, next) {
 //   console.log(doc);
 //   next();
