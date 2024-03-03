@@ -13,4 +13,5 @@ router
     reviewController.createTour
   );
 
+router.route('/:id').delete(authController.deleteRoute);
 module.exports = router;
